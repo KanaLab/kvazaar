@@ -394,12 +394,9 @@ void print_usage(void)
 void print_version(void)
 {
   fprintf(stdout,
-#ifdef CMAKE_BUILD
-    "kvazaar " VERSION_STRING " [" KVZ_COMPILER_STRING "] " KVZ_COMPILE_DATE "\n");
-#else
-  "Kvazaar " VERSION_STRING "\n"
-    "Kvazaar license: 3-clause BSD\n");
-#endif
+    "Kvazaar %s [%s] %s\n"
+    "Kvazaar license: 3-clause BSD\n",
+    kvz_get_version_string(), kvz_get_compiler_string(), kvz_get_compile_date_string());
 }
 
 
@@ -485,7 +482,7 @@ void print_help(void)
     "                                   - 0: Only send VPS with the first frame.\n"
     "                                   - N: Send VPS with every Nth intra frame.\n"
     "  -r, --ref <integer>        : Number of reference frames, in range 1..15 [4]\n"
-    "      --gop <string>         : GOP structure [lp-g4d3t1]\n"
+    "      --gop <string>         : GOP structure [16]\n"
     "                                   -  0: Disabled\n"
     "                                   -  8: B-frame pyramid of length 8\n"
     "                                   - 16: B-frame pyramid of length 16\n"
@@ -622,7 +619,7 @@ void print_help(void)
     "                               guaranteed to produce sensible bitstream or\n"
     "                               work at all. [disabled]\n"
     "      --tr-depth-intra <int> : Transform split depth for intra blocks [0]\n"
-    "      --(no-)bipred          : Bi-prediction [disabled]\n"
+    "      --(no-)bipred          : Bi-prediction [enabled]\n"
     "      --cu-split-termination <string> : CU split search termination [zero]\n"
     "                                   - off: Don't terminate early.\n"
     "                                   - zero: Terminate when residual is zero.\n"
