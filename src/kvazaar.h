@@ -97,7 +97,11 @@ typedef uint8_t kvz_pixel;
 typedef uint16_t kvz_pixel;
 #endif
 
+#if KVZ_BIT_DEPTH <= 14
 typedef int16_t kvz_pixel_im;  // For intermediate precision (interpolation/bipred).
+#else
+typedef int32_t kvz_pixel_im;
+#endif
 
 /**
  * \brief Opaque data structure representing one instance of the encoder.

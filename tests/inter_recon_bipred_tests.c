@@ -87,7 +87,7 @@ static void setup()
 	// Setup is not optimized working function from picture-generic.c.
 
 	
-	int shift = 15 - KVZ_BIT_DEPTH;
+	int shift = KVZ_IF_INTERNAL_PREC_INC + 1;
 	int offset = 1 << (shift - 1);
 
  hi_prec_luma_rec0 = mv_param[0][0] & 3 || mv_param[0][1] & 3;
@@ -106,8 +106,8 @@ static void setup()
 		int y_in_lcu = ((ypos + temp_y) & ((LCU_WIDTH)-1));
 		for (temp_x = 0; temp_x < width; ++temp_x) {
 			int x_in_lcu = ((xpos + temp_x) & ((LCU_WIDTH)-1));
-			int16_t sample0_y = (hi_prec_luma_rec0 ? high_precision_rec0->y[y_in_lcu * LCU_WIDTH + x_in_lcu] : (temp_lcu_y[y_in_lcu * LCU_WIDTH + x_in_lcu] << (14 - KVZ_BIT_DEPTH)));
-			int16_t sample1_y = (hi_prec_luma_rec1 ? high_precision_rec1->y[y_in_lcu * LCU_WIDTH + x_in_lcu] : (expected_test_result.rec.y[y_in_lcu * LCU_WIDTH + x_in_lcu] << (14 - KVZ_BIT_DEPTH)));
+			kvz_pixel_im sample0_y = (hi_prec_luma_rec0 ? high_precision_rec0->y[y_in_lcu * LCU_WIDTH + x_in_lcu] : ((kvz_pixel_im)temp_lcu_y[y_in_lcu * LCU_WIDTH + x_in_lcu] << KVZ_IF_INTERNAL_PREC_INC));
+			kvz_pixel_im sample1_y = (hi_prec_luma_rec1 ? high_precision_rec1->y[y_in_lcu * LCU_WIDTH + x_in_lcu] : ((kvz_pixel_im)expected_test_result.rec.y[y_in_lcu * LCU_WIDTH + x_in_lcu] << KVZ_IF_INTERNAL_PREC_INC));
 			expected_test_result.rec.y[y_in_lcu * LCU_WIDTH + x_in_lcu] = (kvz_pixel)kvz_fast_clip_32bit_to_pixel((sample0_y + sample1_y + offset) >> shift);
 		}
 
@@ -116,12 +116,12 @@ static void setup()
 		int y_in_lcu = (((ypos >> 1) + temp_y) & (LCU_WIDTH_C - 1));
 		for (temp_x = 0; temp_x < width >> 1; ++temp_x) {
 			int x_in_lcu = (((xpos >> 1) + temp_x) & (LCU_WIDTH_C - 1));
-			int16_t sample0_u = (hi_prec_chroma_rec0 ? high_precision_rec0->u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] : (temp_lcu_u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] << (14 - KVZ_BIT_DEPTH)));
-			int16_t sample1_u = (hi_prec_chroma_rec1 ? high_precision_rec1->u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] : (expected_test_result.rec.u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] << (14 - KVZ_BIT_DEPTH)));
+			kvz_pixel_im sample0_u = (hi_prec_chroma_rec0 ? high_precision_rec0->u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] : ((kvz_pixel_im)temp_lcu_u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] << KVZ_IF_INTERNAL_PREC_INC));
+			kvz_pixel_im sample1_u = (hi_prec_chroma_rec1 ? high_precision_rec1->u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] : ((kvz_pixel_im)expected_test_result.rec.u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] << KVZ_IF_INTERNAL_PREC_INC));
 			expected_test_result.rec.u[y_in_lcu * LCU_WIDTH_C + x_in_lcu] = (kvz_pixel)kvz_fast_clip_32bit_to_pixel((sample0_u + sample1_u + offset) >> shift);
 
-			int16_t sample0_v = (hi_prec_chroma_rec0 ? high_precision_rec0->v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] : (temp_lcu_v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] << (14 - KVZ_BIT_DEPTH)));
-			int16_t sample1_v = (hi_prec_chroma_rec1 ? high_precision_rec1->v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] : (expected_test_result.rec.v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] << (14 - KVZ_BIT_DEPTH)));
+			kvz_pixel_im sample0_v = (hi_prec_chroma_rec0 ? high_precision_rec0->v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] : ((kvz_pixel_im)temp_lcu_v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] << KVZ_IF_INTERNAL_PREC_INC));
+			kvz_pixel_im sample1_v = (hi_prec_chroma_rec1 ? high_precision_rec1->v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] : ((kvz_pixel_im)expected_test_result.rec.v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] << KVZ_IF_INTERNAL_PREC_INC));
 			expected_test_result.rec.v[y_in_lcu * LCU_WIDTH_C + x_in_lcu] = (kvz_pixel)kvz_fast_clip_32bit_to_pixel((sample0_v + sample1_v + offset) >> shift);
 
 

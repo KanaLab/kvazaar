@@ -36,7 +36,7 @@
 
 #include "strategies/avx2/dct-avx2.h"
 
-#if COMPILE_INTEL_AVX2
+#if COMPILE_INTEL_AVX2 && KVZ_BIT_DEPTH <= 14
 #include "kvazaar.h"
 #include <immintrin.h>
 
@@ -938,13 +938,12 @@ TRANSFORM(dct, 32);
 ITRANSFORM(dct, 32);
 
 
-#endif //COMPILE_INTEL_AVX2
+#endif //COMPILE_INTEL_AVX2 && KVZ_BIT_DEPTH <= 14
 
 int kvz_strategy_register_dct_avx2(void* opaque, uint8_t bitdepth)
 {
   bool success = true;
-#if COMPILE_INTEL_AVX2
-  // Coefficients are the same for all bitdepths, no need to disable for 10-bit
+#if COMPILE_INTEL_AVX2 && KVZ_BIT_DEPTH <= 14
   success &= kvz_strategyselector_register(opaque, "fast_forward_dst_4x4", "avx2", 40, &matrix_dst_4x4_avx2);
 
   success &= kvz_strategyselector_register(opaque, "dct_4x4", "avx2", 40, &matrix_dct_4x4_avx2);
@@ -959,6 +958,6 @@ int kvz_strategy_register_dct_avx2(void* opaque, uint8_t bitdepth)
   success &= kvz_strategyselector_register(opaque, "idct_16x16", "avx2", 40, &matrix_idct_16x16_avx2);
   success &= kvz_strategyselector_register(opaque, "idct_32x32", "avx2", 40, &matrix_idct_32x32_avx2);
  
-#endif //COMPILE_INTEL_AVX2  
+#endif //COMPILE_INTEL_AVX2 && KVZ_BIT_DEPTH <= 14
   return success;
 }

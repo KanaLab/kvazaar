@@ -175,10 +175,10 @@ static INLINE void kvz_filter_deblock_chroma(const encoder_control_t * const enc
                                              int8_t part_Q_nofilter)
 {
   int32_t delta;
-  int16_t m2 = src[-offset * 2];
-  int16_t m3 = src[-offset];
-  int16_t m4 = src[0];
-  int16_t m5 = src[offset];
+  int32_t m2 = src[-offset * 2];
+  int32_t m3 = src[-offset];
+  int32_t m4 = src[0];
+  int32_t m5 = src[offset];
 
   delta = CLIP(-tc,tc, (((m4 - m3) * 4) + m2 - m5 + 4 ) >> 3);
   if(!part_P_nofilter) {

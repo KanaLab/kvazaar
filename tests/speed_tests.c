@@ -274,10 +274,10 @@ TEST dct_speed(const int width)
   KVZ_GET_TIME(&clock_now);
   double test_end = KVZ_CLOCK_T_AS_DOUBLE(clock_now) + TIME_PER_TEST;
 
-  int16_t _tmp_residual[32 * 32 + SIMD_ALIGNMENT];
-  int16_t _tmp_coeffs[32 * 32 + SIMD_ALIGNMENT];
-  int16_t *tmp_residual = ALIGNED_POINTER(_tmp_residual, SIMD_ALIGNMENT);
-  int16_t *tmp_coeffs = ALIGNED_POINTER(_tmp_coeffs, SIMD_ALIGNMENT);
+  coeff_t _tmp_residual[32 * 32 + SIMD_ALIGNMENT];
+  coeff_t _tmp_coeffs[32 * 32 + SIMD_ALIGNMENT];
+  coeff_t *tmp_residual = ALIGNED_POINTER(_tmp_residual, SIMD_ALIGNMENT);
+  coeff_t *tmp_coeffs = ALIGNED_POINTER(_tmp_coeffs, SIMD_ALIGNMENT);
   
   // Loop until time allocated for test has passed.
   for (unsigned i = 0;
@@ -292,7 +292,7 @@ TEST dct_speed(const int width)
         kvz_pixel * buf1 = &bufs[test][offset];
         kvz_pixel * buf2 = &bufs[test][chunk * size + offset];
         for (int p = 0; p < size; ++p) {
-          tmp_residual[p] = (int16_t)(buf1[p] - buf2[p]);
+          tmp_residual[p] = (coeff_t)(buf1[p] - buf2[p]);
         }
 
         tested_func(8, tmp_residual, tmp_coeffs);

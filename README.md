@@ -461,8 +461,8 @@ For Ubuntu, the required packages are `build-essential cmake`.
 
 
 ### Visual Studio
-- At least VisualStudio 2015.2 is required.
-- Project files can be found under build/.
+- Visual Studio 2026 or later is required.
+- Solution file: build/kvazaar_VS2026.slnx
 - Requires external [vsyasm.exe](http://yasm.tortall.net/Download.html)
   in %PATH%
 

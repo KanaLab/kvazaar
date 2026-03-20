@@ -46,18 +46,18 @@
 extern const uint8_t kvz_g_chroma_scale[58];
 extern const int16_t kvz_g_inv_quant_scales[6];
 
-void kvz_transformskip(const encoder_control_t *encoder, int16_t *block,int16_t *coeff, int8_t block_size);
-void kvz_itransformskip(const encoder_control_t *encoder, int16_t *block,int16_t *coeff, int8_t block_size);
+void kvz_transformskip(const encoder_control_t *encoder, coeff_t *block, coeff_t *coeff, int8_t block_size);
+void kvz_itransformskip(const encoder_control_t *encoder, coeff_t *block, coeff_t *coeff, int8_t block_size);
 
 void kvz_transform2d(const encoder_control_t * const encoder,
-                     int16_t *block,
-                     int16_t *coeff,
+                     coeff_t *block,
+                     coeff_t *coeff,
                      int8_t block_size,
                      color_t color,
                      cu_type_t type);
 void kvz_itransform2d(const encoder_control_t * const encoder,
-                      int16_t *block,
-                      int16_t *coeff,
+                      coeff_t *block,
+                      coeff_t *coeff,
                       int8_t block_size,
                       color_t color,
                       cu_type_t type);

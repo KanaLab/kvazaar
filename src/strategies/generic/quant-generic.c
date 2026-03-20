@@ -77,7 +77,7 @@ void kvz_quant_generic(const encoder_state_t * const state, coeff_t *coef, coeff
     ac_sum += level;
 
     level *= sign;
-    q_coef[n] = (coeff_t)(CLIP(-32768, 32767, level));
+    q_coef[n] = (coeff_t)(CLIP(COEFF_MIN, COEFF_MAX, level));
 
   }
 
@@ -91,7 +91,7 @@ void kvz_quant_generic(const encoder_state_t * const state, coeff_t *coef, coeff
     int32_t curr_quant_coeff = quant_coeff[n];
 
     level = (abs_level * curr_quant_coeff + add) >> q_bits;
-    delta_u[n] = (int32_t)((abs_level * curr_quant_coeff - (level << q_bits)) >> q_bits8);
+    delta_u[n] = (int32_t)((abs_level * curr_quant_coeff - Q_SHIFT(level, q_bits)) >> q_bits8);
   }
 
   if (ac_sum >= 2) {
@@ -204,7 +204,7 @@ int kvz_quantize_residual_generic(encoder_state_t *const state,
   bool early_skip)
 {
   // Temporary arrays to pass data to and from kvz_quant and transform functions.
-  ALIGNED(64) int16_t residual[TR_MAX_WIDTH * TR_MAX_WIDTH];
+  ALIGNED(64) coeff_t residual[TR_MAX_WIDTH * TR_MAX_WIDTH];
   ALIGNED(64) coeff_t coeff[TR_MAX_WIDTH * TR_MAX_WIDTH];
 
   int has_coeffs = 0;
@@ -217,7 +217,7 @@ int kvz_quantize_residual_generic(encoder_state_t *const state,
     int y, x;
     for (y = 0; y < width; ++y) {
       for (x = 0; x < width; ++x) {
-        residual[x + y * width] = (int16_t)(ref_in[x + y * in_stride] - pred_in[x + y * in_stride]);
+        residual[x + y * width] = (coeff_t)(ref_in[x + y * in_stride] - pred_in[x + y * in_stride]);
       }
     }
   }
@@ -271,7 +271,7 @@ int kvz_quantize_residual_generic(encoder_state_t *const state,
     // Get quantized reconstruction. (residual + pred_in -> rec_out)
     for (y = 0; y < width; ++y) {
       for (x = 0; x < width; ++x) {
-        int16_t val = residual[x + y * width] + pred_in[x + y * in_stride];
+        int32_t val = residual[x + y * width] + pred_in[x + y * in_stride];
         rec_out[x + y * out_stride] = (kvz_pixel)CLIP(0, PIXEL_MAX, val);
       }
     }
@@ -300,7 +300,7 @@ void kvz_dequant_generic(const encoder_state_t * const state, coeff_t *q_coef, c
   const encoder_control_t * const encoder = state->encoder_control;
   int32_t shift,add,coeff_q;
   int32_t n;
-  int32_t transform_shift = 15 - encoder->bitdepth - (kvz_g_convert_to_bit[ width ] + 2);
+  int32_t transform_shift = MAX_TR_DYNAMIC_RANGE - encoder->bitdepth - (kvz_g_convert_to_bit[ width ] + 2);
 
   int32_t qp_scaled = kvz_get_scaled_qp(type, state->qp, (encoder->bitdepth-8)*6);
 
@@ -324,8 +324,8 @@ void kvz_dequant_generic(const encoder_state_t * const state, coeff_t *q_coef, c
     } else {
       for (n = 0; n < width * height; n++) {
         // Clip to avoid possible overflow in following shift left operation
-        coeff_q   = CLIP(-32768, 32767, q_coef[n] * dequant_coef[n]);
-        coef[n] = (coeff_t)CLIP(-32768, 32767, coeff_q << (qp_scaled/6 - shift));
+        coeff_q   = CLIP(COEFF_MIN, COEFF_MAX, q_coef[n] * dequant_coef[n]);
+        coef[n] = (coeff_t)CLIP(COEFF_MIN, COEFF_MAX, coeff_q << (qp_scaled/6 - shift));
       }
     }
   } else {
@@ -334,7 +334,7 @@ void kvz_dequant_generic(const encoder_state_t * const state, coeff_t *q_coef, c
 
     for (n = 0; n < width*height; n++) {
       coeff_q   = (q_coef[n] * scale + add) >> shift;
-      coef[n] = (coeff_t)CLIP(-32768, 32767, coeff_q);
+      coef[n] = (coeff_t)CLIP(COEFF_MIN, COEFF_MAX, coeff_q);
     }
   }
 }
@@ -364,7 +364,7 @@ static double fast_coeff_cost_generic(const coeff_t *coeff, int32_t width, uint6
   get_coeff_weights(weights, weights_unpacked);
 
   for (int32_t i = 0; i < width * width; i++) {
-     int16_t curr = coeff[i];
+     int16_t curr = coeff[i]; // TODO: truncates coeff_t for >14-bit; harmless since only abs <= 3 matters
     uint32_t curr_abs = abs(curr);
     if (curr_abs > 3) {
       curr_abs = 3;

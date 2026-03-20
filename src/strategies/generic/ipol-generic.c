@@ -54,7 +54,7 @@ int32_t kvz_eight_tap_filter_hor_generic(int8_t *filter, kvz_pixel *data)
   return temp;
 }
 
-int32_t kvz_eight_tap_filter_hor_16bit_generic(int8_t *filter, int16_t *data)
+int32_t kvz_eight_tap_filter_hor_16bit_generic(int8_t *filter, kvz_pixel_im *data)
 {
   int32_t temp = 0;
   for (int i = 0; i < 8; ++i)
@@ -76,7 +76,7 @@ int32_t kvz_eight_tap_filter_ver_generic(int8_t *filter, kvz_pixel *data, int16_
   return temp;
 }
 
-int32_t kvz_eight_tap_filter_ver_16bit_generic(int8_t *filter, int16_t *data, int16_t stride)
+int32_t kvz_eight_tap_filter_ver_16bit_generic(int8_t *filter, kvz_pixel_im *data, int16_t stride)
 {
   int32_t temp = 0;
   for (int i = 0; i < 8; ++i)
@@ -98,7 +98,7 @@ int32_t kvz_four_tap_filter_hor_generic(int8_t *filter, kvz_pixel *data)
   return temp;
 }
 
-int32_t kvz_four_tap_filter_hor_16bit_generic(int8_t *filter, int16_t *data)
+int32_t kvz_four_tap_filter_hor_16bit_generic(int8_t *filter, kvz_pixel_im *data)
 {
   int32_t temp = 0;
   for (int i = 0; i < 4; ++i)
@@ -120,7 +120,7 @@ int32_t kvz_four_tap_filter_ver_generic(int8_t *filter, kvz_pixel *data, int16_t
   return temp;
 }
 
-int32_t kvz_four_tap_filter_ver_16bit_generic(int8_t *filter, int16_t *data, int16_t stride)
+int32_t kvz_four_tap_filter_ver_16bit_generic(int8_t *filter, kvz_pixel_im *data, int16_t stride)
 {
   int32_t temp = 0;
   for (int i = 0; i < 4; ++i)
@@ -146,18 +146,18 @@ void kvz_sample_quarterpel_luma_generic(const encoder_control_t * const encoder,
   int32_t x, y;
 
   // Interpolation filter shifts
-  int16_t shift1 = KVZ_BIT_DEPTH - 8;
+  int16_t shift1 = MIN(KVZ_BIT_DEPTH - 8, 6);
   int32_t shift2 = 6;
 
   // Weighted prediction offset and shift
-  int32_t wp_shift1 = 14 - KVZ_BIT_DEPTH;
-  int32_t wp_offset1 = 1 << (wp_shift1 - 1);
+  int32_t wp_shift1 = KVZ_IF_INTERNAL_PREC_INC;
+  int32_t wp_offset1 = wp_shift1 > 0 ? (1 << (wp_shift1 - 1)) : 0;
 
   // Select filters according to the fractional part of the x and y mv components
   int8_t *hor_filter = kvz_g_luma_filter[mv[0] & 3];
   int8_t *ver_filter = kvz_g_luma_filter[mv[1] & 3];
 
-  int16_t hor_filtered[KVZ_EXT_BLOCK_W_LUMA][LCU_WIDTH];
+  kvz_pixel_im hor_filtered[KVZ_EXT_BLOCK_W_LUMA][LCU_WIDTH];
   int16_t hor_stride = LCU_WIDTH;
 
   // Filter horizontally
@@ -177,20 +177,20 @@ void kvz_sample_quarterpel_luma_generic(const encoder_control_t * const encoder,
   }
 }
 
-void kvz_sample_quarterpel_luma_hi_generic(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, int16_t *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2])
+void kvz_sample_quarterpel_luma_hi_generic(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, kvz_pixel_im *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2])
 {
   //TODO: horizontal and vertical only filtering
   int32_t x, y;
 
   // Interpolation filter shifts
-  int16_t shift1 = KVZ_BIT_DEPTH - 8;
+  int16_t shift1 = MIN(KVZ_BIT_DEPTH - 8, 6);
   int32_t shift2 = 6;
 
   // Select filters according to the fractional part of the x and y mv components
   int8_t *hor_filter = kvz_g_luma_filter[mv[0] & 3];
   int8_t *ver_filter = kvz_g_luma_filter[mv[1] & 3];
 
-  int16_t hor_filtered[KVZ_EXT_BLOCK_W_LUMA][LCU_WIDTH];
+  kvz_pixel_im hor_filtered[KVZ_EXT_BLOCK_W_LUMA][LCU_WIDTH];
   int16_t hor_stride = LCU_WIDTH;
 
   // Filter horizontally
@@ -216,19 +216,19 @@ void kvz_filter_hpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   int width,
   int height,
   kvz_pixel filtered[4][LCU_LUMA_SIZE],
-  int16_t hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD],
+  kvz_pixel_im hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD],
   int8_t fme_level,
-  int16_t hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
+  kvz_pixel_im hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
   int8_t hpel_off_x, int8_t hpel_off_y)
 {
   int x, y, first_y;
 
   // Interpolation filter shifts
-  int16_t shift1 = KVZ_BIT_DEPTH - 8;
+  int16_t shift1 = MIN(KVZ_BIT_DEPTH - 8, 6);
 
   // Weighted prediction offset and shift
-  int32_t wp_shift1 = 14 - KVZ_BIT_DEPTH;
-  int32_t wp_offset1 = 1 << (wp_shift1 - 1);
+  int32_t wp_shift1 = KVZ_IF_INTERNAL_PREC_INC;
+  int32_t wp_offset1 = wp_shift1 > 0 ? (1 << (wp_shift1 - 1)) : 0;
 
   int8_t *fir0 = kvz_g_luma_filter[0];
   int8_t *fir2 = kvz_g_luma_filter[2];
@@ -237,8 +237,8 @@ void kvz_filter_hpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   int16_t hor_stride = LCU_WIDTH;
   int32_t first_row_offset = (KVZ_LUMA_FILTER_OFFSET + 1) * hor_stride;
 
-  int16_t *col_pos0 = hor_first_cols[0];
-  int16_t *col_pos2 = hor_first_cols[2];
+  kvz_pixel_im *col_pos0 = hor_first_cols[0];
+  kvz_pixel_im *col_pos2 = hor_first_cols[2];
 
   // Horizontally filtered samples from the top row are
   // not needed unless samples for diagonal positions are filtered later.
@@ -285,7 +285,7 @@ void kvz_filter_hpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   // Only horizontal filter
   for (y = 0; y < height; ++y) {
     for (x = 0; x < width; ++x) {
-      filtered[1][y * dst_stride + x] = kvz_fast_clip_16bit_to_pixel((hor_intermediate[1][first_row_offset + y * hor_stride + x] + wp_offset1) >> wp_shift1);
+      filtered[1][y * dst_stride + x] = kvz_fast_clip_im_to_pixel((hor_intermediate[1][first_row_offset + y * hor_stride + x] + wp_offset1) >> wp_shift1);
     }
   }
 
@@ -293,7 +293,7 @@ void kvz_filter_hpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   // Copy from the right filtered block and the extra column
   for (y = 0; y < height; ++y) {
     x = 0;
-    filtered[0][y * dst_stride + x] = kvz_fast_clip_16bit_to_pixel((col_pos2[y + KVZ_LUMA_FILTER_OFFSET + 1] + wp_offset1) >> wp_shift1);
+    filtered[0][y * dst_stride + x] = kvz_fast_clip_im_to_pixel((col_pos2[y + KVZ_LUMA_FILTER_OFFSET + 1] + wp_offset1) >> wp_shift1);
     for (x = 1; x < width; ++x) filtered[0][y * dst_stride + x] = filtered[1][y * dst_stride + x - 1];
   }
 
@@ -303,8 +303,8 @@ void kvz_filter_hpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
     int ypos = y - KVZ_LUMA_FILTER_OFFSET;
     for (x = 0; x < width; ++x) {
       int xpos = x;
-      int16_t sample = kvz_eight_tap_filter_ver_generic(fir2, &src[src_stride*ypos + xpos + 1], src_stride) >> shift1;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_generic(fir2, &src[src_stride*ypos + xpos + 1], src_stride) >> shift1;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[2][y * dst_stride + x] = sample;
     }
   }
@@ -319,8 +319,8 @@ void kvz_filter_hpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   int ypos = y - KVZ_LUMA_FILTER_OFFSET;
   for (x = 0; x < width; ++x) {
     int xpos = x;
-    int16_t sample = kvz_eight_tap_filter_ver_generic(fir2, &src[src_stride*(ypos + 1) + xpos + 1], src_stride) >> shift1;
-    sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+    kvz_pixel_im sample = kvz_eight_tap_filter_ver_generic(fir2, &src[src_stride*(ypos + 1) + xpos + 1], src_stride) >> shift1;
+    sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
     filtered[3][y * dst_stride + x] = sample;
   }
 }
@@ -331,9 +331,9 @@ void kvz_filter_hpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   int width,
   int height,
   kvz_pixel filtered[4][LCU_LUMA_SIZE],
-  int16_t hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD],
+  kvz_pixel_im hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD],
   int8_t fme_level,
-  int16_t hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
+  kvz_pixel_im hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
   int8_t hpel_off_x, int8_t hpel_off_y)
 {
   int x, y;
@@ -342,8 +342,8 @@ void kvz_filter_hpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   int32_t shift2 = 6;
 
   // Weighted prediction offset and shift
-  int32_t wp_shift1 = 14 - KVZ_BIT_DEPTH;
-  int32_t wp_offset1 = 1 << (wp_shift1 - 1);
+  int32_t wp_shift1 = KVZ_IF_INTERNAL_PREC_INC;
+  int32_t wp_offset1 = wp_shift1 > 0 ? (1 << (wp_shift1 - 1)) : 0;
 
   int8_t *fir2 = kvz_g_luma_filter[2];
 
@@ -351,22 +351,22 @@ void kvz_filter_hpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   int16_t hor_stride = LCU_WIDTH;
 
   // Horizontal positions
-  int16_t *col_pos2 = hor_first_cols[2];
+  kvz_pixel_im *col_pos2 = hor_first_cols[2];
 
   // VERTICAL STEP
 
   // Top-right
   for (y = 0; y < height; ++y) {
     for (x = 0; x < width; ++x) {
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(fir2, &hor_intermediate[1][y * hor_stride + x], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(fir2, &hor_intermediate[1][y * hor_stride + x], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[1][y * dst_stride + x] = sample;
     }
   }
 
   for (y = 0; y < height; ++y) {
     x = 0;
-    filtered[0][y * dst_stride + x] = kvz_fast_clip_16bit_to_pixel((col_pos2[y + KVZ_LUMA_FILTER_OFFSET + 1] + wp_offset1) >> wp_shift1);
+    filtered[0][y * dst_stride + x] = kvz_fast_clip_im_to_pixel((col_pos2[y + KVZ_LUMA_FILTER_OFFSET + 1] + wp_offset1) >> wp_shift1);
     for (x = 1; x < width; ++x) filtered[0][y * dst_stride + x] = filtered[1][y * dst_stride + x - 1];
   }
 
@@ -374,8 +374,8 @@ void kvz_filter_hpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   // Copy what can be copied from top-right filtered values. Filter the first column from the column array.
   for (y = 0; y < height; ++y) {
     x = 0;
-    int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(fir2, &col_pos2[y]) >> shift2;
-    sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+    kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(fir2, &col_pos2[y]) >> shift2;
+    sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
     filtered[0][y * dst_stride + x] = sample;
     for (x = 1; x < width; ++x) filtered[0][y * dst_stride + x] = filtered[1][y * dst_stride + x - 1];
   }
@@ -387,8 +387,8 @@ void kvz_filter_hpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   }
 
   for (x = 0; x < width; ++x) {
-    int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(fir2, &hor_intermediate[1][(y + 1) * hor_stride + x], hor_stride) >> shift2;
-    sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+    kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(fir2, &hor_intermediate[1][(y + 1) * hor_stride + x], hor_stride) >> shift2;
+    sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
     filtered[3][y * dst_stride + x] = sample;
   }
 
@@ -401,8 +401,8 @@ void kvz_filter_hpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   }
   for (x = 1; x < width; ++x) filtered[2][y * dst_stride + x] = filtered[3][y * dst_stride + x - 1];
   x = 0;
-  int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(fir2, &col_pos2[(y + 1)]) >> shift2;
-  sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+  kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(fir2, &col_pos2[(y + 1)]) >> shift2;
+  sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
   filtered[2][y * dst_stride + x] = sample;
 }
 
@@ -412,20 +412,20 @@ void kvz_filter_qpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   int width,
   int height,
   kvz_pixel filtered[4][LCU_LUMA_SIZE],
-  int16_t hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD],
+  kvz_pixel_im hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD],
   int8_t fme_level,
-  int16_t hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
+  kvz_pixel_im hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
   int8_t hpel_off_x, int8_t hpel_off_y)
 {
   int x, y;
 
   // Interpolation filter shifts
-  int16_t shift1 = KVZ_BIT_DEPTH - 8;
+  int16_t shift1 = MIN(KVZ_BIT_DEPTH - 8, 6);
   int32_t shift2 = 6;
 
   // Weighted prediction offset and shift
-  int32_t wp_shift1 = 14 - KVZ_BIT_DEPTH;
-  int32_t wp_offset1 = 1 << (wp_shift1 - 1);
+  int32_t wp_shift1 = KVZ_IF_INTERNAL_PREC_INC;
+  int32_t wp_offset1 = wp_shift1 > 0 ? (1 << (wp_shift1 - 1)) : 0;
 
   int8_t *fir0 = kvz_g_luma_filter[0];
   int8_t *fir2 = kvz_g_luma_filter[2];
@@ -433,20 +433,20 @@ void kvz_filter_qpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   int8_t *fir3 = kvz_g_luma_filter[3];
 
   // Horiziontal positions. Positions 0 and 2 have already been calculated in filtered.
-  int16_t *hor_pos0 = hor_intermediate[0];
-  int16_t *hor_pos2 = hor_intermediate[1];
-  int16_t *hor_pos_l = hor_intermediate[3];
-  int16_t *hor_pos_r = hor_intermediate[4];
+  kvz_pixel_im *hor_pos0 = hor_intermediate[0];
+  kvz_pixel_im *hor_pos2 = hor_intermediate[1];
+  kvz_pixel_im *hor_pos_l = hor_intermediate[3];
+  kvz_pixel_im *hor_pos_r = hor_intermediate[4];
   int8_t *hor_fir_l  = hpel_off_x != 0 ? fir1 : fir3;
   int8_t *hor_fir_r  = hpel_off_x != 0 ? fir3 : fir1;
-  int16_t *col_pos_l = hor_first_cols[1];
-  int16_t *col_pos_r = hor_first_cols[3];
+  kvz_pixel_im *col_pos_l = hor_first_cols[1];
+  kvz_pixel_im *col_pos_r = hor_first_cols[3];
 
   int16_t dst_stride = LCU_WIDTH;
   int16_t hor_stride = LCU_WIDTH;
 
-  int16_t *hor_hpel_pos = hpel_off_x != 0 ? hor_pos2 : hor_pos0;
-  int16_t *col_pos_hor  = hpel_off_x != 0 ? hor_first_cols[2] : hor_first_cols[0];
+  kvz_pixel_im *hor_hpel_pos = hpel_off_x != 0 ? hor_pos2 : hor_pos0;
+  kvz_pixel_im *col_pos_hor  = hpel_off_x != 0 ? hor_first_cols[2] : hor_first_cols[0];
 
   // Specify if integer pixels are filtered from left or/and top integer samples
   int off_x_fir_l = hpel_off_x < 1 ? 0 : 1;
@@ -500,15 +500,15 @@ void kvz_filter_qpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   for (y = 0; y < height; ++y) {
     if (!off_x_fir_l) {
       x = 0;
-      int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_l, &col_pos_l[y + sample_off_y]) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_l, &col_pos_l[y + sample_off_y]) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[0][y * dst_stride + x] = sample;
     }
     for (x = !off_x_fir_l; x < width; ++x) {
       int ypos = y + sample_off_y;
       int xpos = x - !off_x_fir_l;
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_l, &hor_pos_l[ypos * hor_stride + xpos], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_l, &hor_pos_l[ypos * hor_stride + xpos], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[0][y * dst_stride + x] = sample;
     }
   }
@@ -517,15 +517,15 @@ void kvz_filter_qpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   for (y = 0; y < height; ++y) {
     if (!off_x_fir_r) {
       x = 0;
-      int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_r, &col_pos_r[y + sample_off_y]) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_r, &col_pos_r[y + sample_off_y]) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[1][y * dst_stride + x] = sample;
     }
     for (x = !off_x_fir_r; x < width; ++x) {
       int ypos = y + sample_off_y;
       int xpos = x - !off_x_fir_r;
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_r, &hor_pos_r[ypos * hor_stride + xpos], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_r, &hor_pos_r[ypos * hor_stride + xpos], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[1][y * dst_stride + x] = sample;
     }
   }
@@ -535,15 +535,15 @@ void kvz_filter_qpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   for (y = 0; y < height; ++y) {
     if (!sample_off_x) {
       x = 0;
-      int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_t, &col_pos_hor[y + off_y_fir_t]) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_t, &col_pos_hor[y + off_y_fir_t]) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[2][y * dst_stride + x] = sample;
     }
     for (x = !sample_off_x; x < width; ++x) {
       int ypos = y + off_y_fir_t;
       int xpos = x - !sample_off_x;
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_t, &hor_hpel_pos[ypos * hor_stride + xpos], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_t, &hor_hpel_pos[ypos * hor_stride + xpos], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[2][y * dst_stride + x] = sample;
     }
   }
@@ -552,15 +552,15 @@ void kvz_filter_qpel_blocks_hor_ver_luma_generic(const encoder_control_t * encod
   for (y = 0; y < height; ++y) {
     if (!sample_off_x) {
       x = 0;
-      int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_b, &col_pos_hor[y + off_y_fir_b]) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_b, &col_pos_hor[y + off_y_fir_b]) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[3][y * dst_stride + x] = sample;
     }
     for (x = !sample_off_x; x < width; ++x) {
       int ypos = y + off_y_fir_b;
       int xpos = x - !sample_off_x;
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_b, &hor_hpel_pos[ypos * hor_stride + xpos], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_b, &hor_hpel_pos[ypos * hor_stride + xpos], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[3][y * dst_stride + x] = sample;
     }
   }
@@ -572,9 +572,9 @@ void kvz_filter_qpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   int width,
   int height,
   kvz_pixel filtered[4][LCU_LUMA_SIZE],
-  int16_t hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD],
+  kvz_pixel_im hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD],
   int8_t fme_level,
-  int16_t hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
+  kvz_pixel_im hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
   int8_t hpel_off_x, int8_t hpel_off_y)
 {
   int x, y;
@@ -583,18 +583,18 @@ void kvz_filter_qpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   int32_t shift2 = 6;
 
   // Weighted prediction offset and shift
-  int32_t wp_shift1 = 14 - KVZ_BIT_DEPTH;
-  int32_t wp_offset1 = 1 << (wp_shift1 - 1);
+  int32_t wp_shift1 = KVZ_IF_INTERNAL_PREC_INC;
+  int32_t wp_offset1 = wp_shift1 > 0 ? (1 << (wp_shift1 - 1)) : 0;
 
   int8_t *fir1 = kvz_g_luma_filter[1];
   int8_t *fir3 = kvz_g_luma_filter[3];
 
   // Horiziontal positions.
-  int16_t *hor_pos_l = hor_intermediate[3];
-  int16_t *hor_pos_r = hor_intermediate[4];
+  kvz_pixel_im *hor_pos_l = hor_intermediate[3];
+  kvz_pixel_im *hor_pos_r = hor_intermediate[4];
 
-  int16_t *col_pos_l = hor_first_cols[1];
-  int16_t *col_pos_r = hor_first_cols[3];
+  kvz_pixel_im *col_pos_l = hor_first_cols[1];
+  kvz_pixel_im *col_pos_r = hor_first_cols[3];
 
   int16_t dst_stride = LCU_WIDTH;
   int16_t hor_stride = LCU_WIDTH;
@@ -613,15 +613,15 @@ void kvz_filter_qpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   for (y = 0; y < height; ++y) {
     if (!off_x_fir_l) {
       x = 0;
-      int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_t, &col_pos_l[y + off_y_fir_t]) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_t, &col_pos_l[y + off_y_fir_t]) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[0][y * dst_stride + x] = sample;
     }
     for (x = !off_x_fir_l; x < width; ++x) {
       int ypos = y + off_y_fir_t;
       int xpos = x - !off_x_fir_l;
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_t, &hor_pos_l[ypos * hor_stride + xpos], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_t, &hor_pos_l[ypos * hor_stride + xpos], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[0][y * dst_stride + x] = sample;
     }
   }
@@ -630,15 +630,15 @@ void kvz_filter_qpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   for (y = 0; y < height; ++y) {
     if (!off_x_fir_r) {
       x = 0;
-      int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_t, &col_pos_r[y + off_y_fir_t]) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_t, &col_pos_r[y + off_y_fir_t]) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[1][y * dst_stride + x] = sample;
     }
     for (x = !off_x_fir_r; x < width; ++x) {
       int ypos = y + off_y_fir_t;
       int xpos = x - !off_x_fir_r;
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_t, &hor_pos_r[ypos * hor_stride + xpos], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_t, &hor_pos_r[ypos * hor_stride + xpos], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[1][y * dst_stride + x] = sample;
     }
   }
@@ -647,15 +647,15 @@ void kvz_filter_qpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   for (y = 0; y < height; ++y) {
     if (!off_x_fir_l) {
       x = 0;
-      int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_b, &col_pos_l[y + off_y_fir_b]) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_b, &col_pos_l[y + off_y_fir_b]) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[2][y * dst_stride + x] = sample;
     }
     for (x = !off_x_fir_l; x < width; ++x) {
       int ypos = y + off_y_fir_b;
       int xpos = x - !off_x_fir_l;
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_b, &hor_pos_l[ypos * hor_stride + xpos], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_b, &hor_pos_l[ypos * hor_stride + xpos], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[2][y * dst_stride + x] = sample;
     }
   }
@@ -664,15 +664,15 @@ void kvz_filter_qpel_blocks_diag_luma_generic(const encoder_control_t * encoder,
   for (y = 0; y < height; ++y) {
     if (!off_x_fir_r) {
       x = 0;
-      int16_t sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_b, &col_pos_r[y + off_y_fir_b]) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_hor_16bit_generic(ver_fir_b, &col_pos_r[y + off_y_fir_b]) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[3][y * dst_stride + x] = sample;
     }
     for (x = !off_x_fir_r; x < width; ++x) {
       int ypos = y + off_y_fir_b;
       int xpos = x - !off_x_fir_r;
-      int16_t sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_b, &hor_pos_r[ypos * hor_stride + xpos], hor_stride) >> shift2;
-      sample = kvz_fast_clip_16bit_to_pixel((sample + wp_offset1) >> wp_shift1);
+      kvz_pixel_im sample = kvz_eight_tap_filter_ver_16bit_generic(ver_fir_b, &hor_pos_r[ypos * hor_stride + xpos], hor_stride) >> shift2;
+      sample = kvz_fast_clip_im_to_pixel((sample + wp_offset1) >> wp_shift1);
       filtered[3][y * dst_stride + x] = sample;
     }
   }
@@ -693,18 +693,18 @@ void kvz_sample_octpel_chroma_generic(const encoder_control_t * const encoder,
   int32_t x, y;
 
   // Interpolation filter shifts
-  int16_t shift1 = KVZ_BIT_DEPTH - 8;
+  int16_t shift1 = MIN(KVZ_BIT_DEPTH - 8, 6);
   int32_t shift2 = 6;
 
   // Weighted prediction offset and shift
-  int32_t wp_shift1 = 14 - KVZ_BIT_DEPTH;
-  int32_t wp_offset1 = 1 << (wp_shift1 - 1);
+  int32_t wp_shift1 = KVZ_IF_INTERNAL_PREC_INC;
+  int32_t wp_offset1 = wp_shift1 > 0 ? (1 << (wp_shift1 - 1)) : 0;
 
   // Select filters according to the fractional part of the x and y mv components
   int8_t *hor_filter = kvz_g_chroma_filter[mv[0] & 7];
   int8_t *ver_filter = kvz_g_chroma_filter[mv[1] & 7];
 
-  int16_t hor_filtered[KVZ_EXT_BLOCK_W_CHROMA][LCU_WIDTH_C];
+  kvz_pixel_im hor_filtered[KVZ_EXT_BLOCK_W_CHROMA][LCU_WIDTH_C];
   int16_t hor_stride = LCU_WIDTH_C;
 
   // Filter horizontally
@@ -724,20 +724,20 @@ void kvz_sample_octpel_chroma_generic(const encoder_control_t * const encoder,
   }
 }
 
-void kvz_sample_octpel_chroma_hi_generic(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, int16_t *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2])
+void kvz_sample_octpel_chroma_hi_generic(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, kvz_pixel_im *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2])
 {
   //TODO: horizontal and vertical only filtering
   int32_t x, y;
 
   // Interpolation filter shifts
-  int16_t shift1 = KVZ_BIT_DEPTH - 8;
+  int16_t shift1 = MIN(KVZ_BIT_DEPTH - 8, 6);
   int32_t shift2 = 6;
 
   // Select filters according to the fractional part of the x and y mv components
   int8_t *hor_filter = kvz_g_chroma_filter[mv[0] & 7];
   int8_t *ver_filter = kvz_g_chroma_filter[mv[1] & 7];
 
-  int16_t hor_filtered[KVZ_EXT_BLOCK_W_CHROMA][LCU_WIDTH_C];
+  kvz_pixel_im hor_filtered[KVZ_EXT_BLOCK_W_CHROMA][LCU_WIDTH_C];
   int16_t hor_stride = LCU_WIDTH_C;
 
   // Filter horizontally

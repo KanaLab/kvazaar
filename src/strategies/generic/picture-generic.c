@@ -533,6 +533,7 @@ SAD_DUAL_NXN(16, kvz_pixel)
 SAD_DUAL_NXN(32, kvz_pixel)
 SAD_DUAL_NXN(64, kvz_pixel)
 
+#if KVZ_BIT_DEPTH <= 14
 static unsigned pixels_calc_ssd_generic(const kvz_pixel *const ref, const kvz_pixel *const rec,
                  const int ref_stride, const int rec_stride,
                  const int width)
@@ -549,6 +550,24 @@ static unsigned pixels_calc_ssd_generic(const kvz_pixel *const ref, const kvz_pi
 
   return ssd >> (2*(KVZ_BIT_DEPTH-8));
 }
+#else
+static uint64_t pixels_calc_ssd_generic(const kvz_pixel *const ref, const kvz_pixel *const rec,
+                 const int ref_stride, const int rec_stride,
+                 const int width)
+{
+  int64_t ssd = 0;
+  int y, x;
+
+  for (y = 0; y < width; ++y) {
+    for (x = 0; x < width; ++x) {
+      int diff = ref[x + y * ref_stride] - rec[x + y * rec_stride];
+      ssd += (int64_t)diff * diff;
+    }
+  }
+
+  return ssd >> (2*(KVZ_BIT_DEPTH-8));
+}
+#endif
 
 static void bipred_average_px_px(kvz_pixel *dst,
   kvz_pixel *px_L0,
@@ -557,15 +576,15 @@ static void bipred_average_px_px(kvz_pixel *dst,
   unsigned pu_h,
   unsigned dst_stride)
 {
-  int32_t shift = 15 - KVZ_BIT_DEPTH; // TODO: defines
+  int32_t shift = KVZ_IF_INTERNAL_PREC_INC + 1;
   int32_t offset = 1 << (shift - 1);
 
   for (int i = 0; i < pu_w * pu_h; ++i)
   {
     int y = i / pu_w;
     int x = i % pu_w;
-    int16_t sample_L0 = px_L0[i] << (14 - KVZ_BIT_DEPTH);
-    int16_t sample_L1 = px_L1[i] << (14 - KVZ_BIT_DEPTH);
+    kvz_pixel_im sample_L0 = (kvz_pixel_im)px_L0[i] << KVZ_IF_INTERNAL_PREC_INC;
+    kvz_pixel_im sample_L1 = (kvz_pixel_im)px_L1[i] << KVZ_IF_INTERNAL_PREC_INC;
     int32_t rounded = (sample_L0 + sample_L1 + offset) >> shift;
     dst[y * dst_stride + x] = kvz_fast_clip_32bit_to_pixel(rounded);
   }
@@ -578,15 +597,15 @@ static void bipred_average_im_im(kvz_pixel *dst,
   unsigned pu_h,
   unsigned dst_stride)
 {
-  int32_t shift = 15 - KVZ_BIT_DEPTH; // TODO: defines
+  int32_t shift = KVZ_IF_INTERNAL_PREC_INC + 1;
   int32_t offset = 1 << (shift - 1);
 
   for (int i = 0; i < pu_w * pu_h; ++i)
   {
     int y = i / pu_w;
     int x = i % pu_w;
-    int16_t sample_L0 = im_L0[i];
-    int16_t sample_L1 = im_L1[i];
+    kvz_pixel_im sample_L0 = im_L0[i];
+    kvz_pixel_im sample_L1 = im_L1[i];
     int32_t rounded = (sample_L0 + sample_L1 + offset) >> shift;
     dst[y * dst_stride + x] = kvz_fast_clip_32bit_to_pixel(rounded);
   }
@@ -599,15 +618,15 @@ static void bipred_average_px_im(kvz_pixel *dst,
   unsigned pu_h,
   unsigned dst_stride)
 {
-  int32_t shift = 15 - KVZ_BIT_DEPTH; // TODO: defines
+  int32_t shift = KVZ_IF_INTERNAL_PREC_INC + 1;
   int32_t offset = 1 << (shift - 1);
 
   for (int i = 0; i < pu_w * pu_h; ++i)
   {
     int y = i / pu_w;
     int x = i % pu_w;
-    int16_t sample_px = px[i] << (14 - KVZ_BIT_DEPTH);
-    int16_t sample_im = im[i];
+    kvz_pixel_im sample_px = (kvz_pixel_im)px[i] << KVZ_IF_INTERNAL_PREC_INC;
+    kvz_pixel_im sample_im = im[i];
     int32_t rounded = (sample_px + sample_im + offset) >> shift;
     dst[y * dst_stride + x] = kvz_fast_clip_32bit_to_pixel(rounded);
   }

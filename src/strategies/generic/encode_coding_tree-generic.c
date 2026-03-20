@@ -79,10 +79,9 @@ void kvz_encode_coeff_nxn_generic(encoder_state_t * const state,
     for (int cg_x = 0; cg_x < width / 4; ++cg_x) {
       unsigned cg_pos = cg_y * width * 4 + cg_x * 4;
       for (int coeff_row = 0; coeff_row < 4; ++coeff_row) {
-        // Load four 16-bit coeffs and see if any of them are non-zero.
+        // Check four coeffs to see if any of them are non-zero.
         unsigned coeff_pos = cg_pos + coeff_row * width;
-        uint64_t four_coeffs = *(uint64_t*)(&coeff[coeff_pos]);
-        if (four_coeffs) {
+        if (coeff[coeff_pos] || coeff[coeff_pos + 1] || coeff[coeff_pos + 2] || coeff[coeff_pos + 3]) {
           ++sig_cg_cnt;
           unsigned cg_pos_y = (cg_pos >> log2_block_size) >> TR_MIN_LOG2_SIZE;
           unsigned cg_pos_x = (cg_pos & (width - 1)) >> TR_MIN_LOG2_SIZE;

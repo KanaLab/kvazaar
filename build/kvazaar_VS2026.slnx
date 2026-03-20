@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Solution>
+	<Configurations>
+		<BuildType Name="Debug"/>
+		<BuildType Name="Release"/>
+		<Platform Name="Win32"/>
+		<Platform Name="x64"/>
+	</Configurations>
+	<Project Path="kvazaar_lib\kvazaar_lib.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="eea3bdd1-8a08-41c1-ba57-e05d5c2cd8ff"/>
+	<Project Path="kvazaar_cli\kvazaar_cli.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="c755308d-9b3e-4712-99ab-7f6f4e2da567">
+		<BuildDependency Project="kvazaar_lib\kvazaar_lib.vcxproj"/>
+	</Project>
+	<Project Path="kvazaar_tests\kvazaar_tests.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="3cd1c68b-542c-46d8-9b8a-6c91c5a3f312">
+		<BuildDependency Project="kvazaar_lib\kvazaar_lib.vcxproj"/>
+	</Project>
+</Solution>

@@ -18,6 +18,8 @@ option(USE_CRYPTO "Use crypto library" OFF)
 
 option(BUILD_KVAZAAR_BINARY "Build kvazaar-bin" ON) # To build only the lib, useful for iOS-builds
 
+set(KVZ_BIT_DEPTH 8 CACHE STRING "Pixel bit depth (8-16)")
+
 include(GNUInstallDirs) #Helps to define correct distro specific install directories
 set(DEFERRED "@")
 
@@ -202,7 +204,7 @@ if(BUILD_SHARED_LIBS)
 else()
   add_library(kvazaar STATIC ${LIB_SOURCES})
   if(MSVC) # Fix a linking problem with visual studio when the library is the same name as the binary
-    set_target_properties(kvazaar PROPERTIES OUTPUT_NAME libkvazaar)
+    set_target_properties(kvazaar PROPERTIES OUTPUT_NAME kvazaar_lib)
   endif()
   
 endif()
@@ -210,6 +212,7 @@ endif()
 target_compile_definitions(kvazaar PUBLIC KVZ_VERSION_MAJOR=${KVAZAAR_VERSION_MAJOR})
 target_compile_definitions(kvazaar PUBLIC KVZ_VERSION_MINOR=${KVAZAAR_VERSION_MINOR})
 target_compile_definitions(kvazaar PUBLIC KVZ_VERSION_REVISION=${KVAZAAR_VERSION_REVISION})
+target_compile_definitions(kvazaar PUBLIC KVZ_BIT_DEPTH=${KVZ_BIT_DEPTH})
 
 target_include_directories(kvazaar PUBLIC src)
 target_include_directories(kvazaar PUBLIC src/extras)

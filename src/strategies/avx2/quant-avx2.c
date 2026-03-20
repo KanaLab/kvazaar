@@ -56,6 +56,7 @@
 #include "transform.h"
 #include "fast_coeff_cost.h"
 
+#if KVZ_BIT_DEPTH <= 14
 static INLINE int32_t hsum32_8x32i(__m256i src)
 {
   __m128i a = _mm256_extracti128_si256(src, 0);
@@ -520,6 +521,8 @@ void kvz_quant_avx2(const encoder_state_t * const state, const coeff_t * __restr
 #undef LOG2_SCAN_SET_SIZE
 }
 
+#endif // KVZ_BIT_DEPTH <= 14
+
 #if KVZ_BIT_DEPTH == 8
 
 static INLINE __m128i get_residual_4x1_avx2(const uint8_t *a_in, const uint8_t *b_in){
@@ -729,7 +732,7 @@ void kvz_dequant_avx2(const encoder_state_t * const state, coeff_t *q_coef, coef
   const encoder_control_t * const encoder = state->encoder_control;
   int32_t shift,add,coeff_q;
   int32_t n;
-  int32_t transform_shift = 15 - encoder->bitdepth - (kvz_g_convert_to_bit[ width ] + 2);
+  int32_t transform_shift = MAX_TR_DYNAMIC_RANGE - encoder->bitdepth - (kvz_g_convert_to_bit[ width ] + 2);
 
   int32_t qp_scaled = kvz_get_scaled_qp(type, state->qp, (encoder->bitdepth-8)*6);
 
@@ -753,8 +756,8 @@ void kvz_dequant_avx2(const encoder_state_t * const state, coeff_t *q_coef, coef
     } else {
       for (n = 0; n < width * height; n++) {
         // Clip to avoid possible overflow in following shift left operation
-        coeff_q   = CLIP(-32768, 32767, q_coef[n] * dequant_coef[n]);
-        coef[n] = (coeff_t)CLIP(-32768, 32767, coeff_q << (qp_scaled/6 - shift));
+        coeff_q   = CLIP(COEFF_MIN, COEFF_MAX, q_coef[n] * dequant_coef[n]);
+        coef[n] = (coeff_t)CLIP(COEFF_MIN, COEFF_MAX, coeff_q << (qp_scaled/6 - shift));
       }
     }
   } else {
@@ -943,10 +946,12 @@ int kvz_strategy_register_quant_avx2(void* opaque, uint8_t bitdepth)
     success &= kvz_strategyselector_register(opaque, "dequant", "avx2", 40, &kvz_dequant_avx2);
   }
 #endif // KVZ_BIT_DEPTH == 8
+#if KVZ_BIT_DEPTH <= 14
   success &= kvz_strategyselector_register(opaque, "quant", "avx2", 40, &kvz_quant_avx2);
   success &= kvz_strategyselector_register(opaque, "coeff_abs_sum", "avx2", 0, &coeff_abs_sum_avx2);
   success &= kvz_strategyselector_register(opaque, "fast_coeff_cost", "avx2", 40, &fast_coeff_cost_avx2);
   success &= kvz_strategyselector_register(opaque, "find_last_scanpos", "avx2", 40, &find_last_scanpos_avx2);
+#endif // KVZ_BIT_DEPTH <= 14
 #endif //COMPILE_INTEL_AVX2 && defined X86_64
 
   return success;

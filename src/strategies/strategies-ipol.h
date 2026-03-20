@@ -62,7 +62,7 @@
 typedef struct { kvz_pixel *buffer; kvz_pixel *orig_topleft; unsigned stride; unsigned malloc_used; } kvz_extended_block;
 
 typedef void(ipol_blocks_func)(const encoder_control_t * encoder, kvz_pixel *src, int16_t src_stride, int width, int height,
-  kvz_pixel filtered[4][LCU_LUMA_SIZE], int16_t hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD], int8_t fme_level, int16_t hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
+  kvz_pixel filtered[4][LCU_LUMA_SIZE], kvz_pixel_im hor_intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD], int8_t fme_level, kvz_pixel_im hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1],
   int8_t sample_off_x, int8_t sample_off_y);
 
 typedef struct {
@@ -98,8 +98,8 @@ typedef void(epol_func)(kvz_epol_args *args);
 typedef void(kvz_sample_quarterpel_luma_func)(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, kvz_pixel *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2]);
 typedef void(kvz_sample_octpel_chroma_func)(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, kvz_pixel *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2]);
 
-typedef void(kvz_sample_quarterpel_luma_hi_func)(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, int16_t *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2]);
-typedef void(kvz_sample_octpel_chroma_hi_func)(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, int16_t *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2]);
+typedef void(kvz_sample_quarterpel_luma_hi_func)(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, kvz_pixel_im *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2]);
+typedef void(kvz_sample_octpel_chroma_hi_func)(const encoder_control_t * const encoder, kvz_pixel *src, int16_t src_stride, int width, int height, kvz_pixel_im *dst, int16_t dst_stride, int8_t hor_flag, int8_t ver_flag, const int16_t mv[2]);
 
 typedef void(kvz_sample_14bit_quarterpel_luma_func)(const encoder_control_t * const encoder,
   kvz_pixel *src,

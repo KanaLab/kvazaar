@@ -267,7 +267,11 @@ static INLINE void save_ccc(int qp, const coeff_t *coeff, int32_t size, double c
 {
   pthread_mutex_t *mtx = outfile_mutex + qp;
 
+#if KVZ_BIT_DEPTH <= 14
   assert(sizeof(coeff_t) == sizeof(int16_t));
+#else
+  assert(sizeof(coeff_t) == sizeof(int32_t));
+#endif
   assert(qp <= RD_SAMPLING_MAX_LAST_QP);
 
   pthread_mutex_lock(mtx);
@@ -435,7 +439,7 @@ INLINE uint32_t kvz_get_coded_level ( encoder_state_t * const state, double *cod
 
   min_abs_level    = ( max_abs_level > 1 ? max_abs_level - 1 : 1 );
   for (abs_level = max_abs_level; abs_level >= min_abs_level ; abs_level-- ) {
-    double err       = (double)(level_double - ( abs_level * (1 << q_bits) ) );
+    double err       = (double)(level_double - ( abs_level * Q_SHIFT(1, q_bits) ) );
     double cur_cost  = err * err * temp + state->lambda *
                        kvz_get_ic_rate( state, abs_level, ctx_num_one, ctx_num_abs,
                                     abs_go_rice, c1_idx, c2_idx, type);
@@ -790,7 +794,7 @@ void kvz_rdoq(encoder_state_t * const state, coeff_t *coef, coeff_t *dest_coeff,
       }
 
       if (encoder->cfg.signhide_enable) {
-        sh_rates.quant_delta[blkpos] = (level_double - level * (1 << q_bits)) >> (q_bits - 8);
+        sh_rates.quant_delta[blkpos] = (level_double - level * Q_SHIFT(1, q_bits)) >> (q_bits - 8);
         if (level > 0) {
           int32_t rate_now  = kvz_get_ic_rate(state, level, one_ctx, abs_ctx, go_rice_param, c1_idx, c2_idx, type);
           int32_t rate_up   = kvz_get_ic_rate(state, level + 1, one_ctx, abs_ctx, go_rice_param, c1_idx, c2_idx, type);

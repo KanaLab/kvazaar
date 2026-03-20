@@ -1001,8 +1001,8 @@ static void search_frac(inter_search_info_t *info,
 
   // Storage buffers for intermediate horizontally filtered results.
   // Have the first columns in contiguous memory for vectorization.
-  ALIGNED(64) int16_t intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD];
-  int16_t hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1];
+  ALIGNED(64) kvz_pixel_im intermediate[5][KVZ_IPOL_MAX_IM_SIZE_LUMA_SIMD];
+  kvz_pixel_im hor_first_cols[5][KVZ_EXT_BLOCK_W_LUMA + 1];
 
   const kvz_picture *ref = info->ref;
   const kvz_picture *pic = info->pic;

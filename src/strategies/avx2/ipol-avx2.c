@@ -84,6 +84,7 @@ static int32_t kvz_eight_tap_filter_hor_16bit_avx2(int8_t *filter, int16_t *data
   return filtered;
 }
 
+#if KVZ_BIT_DEPTH <= 14
 static void kvz_eight_tap_filter_ver_16bit_1x8_avx2(int8_t *filter, int16_t *data, int16_t stride, kvz_pixel *out)
 {
   // Interpolation filter shifts
@@ -1242,13 +1243,14 @@ static void kvz_sample_octpel_chroma_hi_avx2(const encoder_control_t *const enco
   kvz_ipol_4tap_hor_px_im_avx2(hor_fir, width, height, src, src_stride, hor_intermediate, hor_stride);
   kvz_ipol_4tap_ver_im_hi_avx2(ver_fir, width, height, hor_intermediate, hor_stride, dst, dst_stride);
 }
+#endif // KVZ_BIT_DEPTH <= 14
 
 #endif //COMPILE_INTEL_AVX2 && defined X86_64
 
 int kvz_strategy_register_ipol_avx2(void* opaque, uint8_t bitdepth)
 {
   bool success = true;
-#if COMPILE_INTEL_AVX2 && defined X86_64
+#if COMPILE_INTEL_AVX2 && defined X86_64 && KVZ_BIT_DEPTH <= 14
   if (bitdepth == 8){
     success &= kvz_strategyselector_register(opaque, "filter_hpel_blocks_hor_ver_luma", "avx2", 40, &kvz_filter_hpel_blocks_hor_ver_luma_avx2);
     success &= kvz_strategyselector_register(opaque, "filter_hpel_blocks_diag_luma", "avx2", 40, &kvz_filter_hpel_blocks_diag_luma_avx2);
@@ -1259,6 +1261,6 @@ int kvz_strategy_register_ipol_avx2(void* opaque, uint8_t bitdepth)
     success &= kvz_strategyselector_register(opaque, "sample_quarterpel_luma_hi", "avx2", 40, &kvz_sample_quarterpel_luma_hi_avx2);
     success &= kvz_strategyselector_register(opaque, "sample_octpel_chroma_hi", "avx2", 40, &kvz_sample_octpel_chroma_hi_avx2);
   }
-#endif //COMPILE_INTEL_AVX2 && defined X86_64
+#endif //COMPILE_INTEL_AVX2 && defined X86_64 && KVZ_BIT_DEPTH <= 14
   return success;
 }

@@ -160,15 +160,14 @@ int32_t kvz_get_scaled_qp(int8_t type, int8_t qp, int8_t qp_offset)
  * \param block output data (residual)
  * \param block_size input data (width of transform)
  */
-void kvz_transformskip(const encoder_control_t * const encoder, int16_t *block,int16_t *coeff, int8_t block_size)
+void kvz_transformskip(const encoder_control_t * const encoder, coeff_t *block, coeff_t *coeff, int8_t block_size)
 {
   uint32_t log2_tr_size =  kvz_g_convert_to_bit[block_size] + 2;
   int32_t  shift = MAX_TR_DYNAMIC_RANGE - encoder->bitdepth - log2_tr_size;
   int32_t  j,k;
   for (j = 0; j < block_size; j++) {
     for(k = 0; k < block_size; k ++) {
-      // Casting back and forth to make UBSan not trigger due to left-shifting negatives
-      coeff[j * block_size + k] = (int16_t)((uint16_t)(block[j * block_size + k]) << shift);
+      coeff[j * block_size + k] = block[j * block_size + k] << shift;
     }
   }
 }
@@ -179,7 +178,7 @@ void kvz_transformskip(const encoder_control_t * const encoder, int16_t *block,i
  * \param block output data (residual)
  * \param block_size width of transform
  */
-void kvz_itransformskip(const encoder_control_t * const encoder, int16_t *block,int16_t *coeff, int8_t block_size)
+void kvz_itransformskip(const encoder_control_t * const encoder, coeff_t *block, coeff_t *coeff, int8_t block_size)
 {
   uint32_t log2_tr_size =  kvz_g_convert_to_bit[block_size] + 2;
   int32_t  shift = MAX_TR_DYNAMIC_RANGE - encoder->bitdepth - log2_tr_size;
@@ -200,8 +199,8 @@ void kvz_itransformskip(const encoder_control_t * const encoder, int16_t *block,
  * \param block_size width of transform
  */
 void kvz_transform2d(const encoder_control_t * const encoder,
-                     int16_t *block,
-                     int16_t *coeff,
+                     coeff_t *block,
+                     coeff_t *coeff,
                      int8_t block_size,
                      color_t color,
                      cu_type_t type)
@@ -211,8 +210,8 @@ void kvz_transform2d(const encoder_control_t * const encoder,
 }
 
 void kvz_itransform2d(const encoder_control_t * const encoder,
-                      int16_t *block,
-                      int16_t *coeff,
+                      coeff_t *block,
+                      coeff_t *coeff,
                       int8_t block_size,
                       color_t color,
                       cu_type_t type)

@@ -41,7 +41,7 @@ static uint32_t expected_test_result;
 
 static void setup()
 {
-  // Fill test data.
+  // Fill test data using int16 range (sufficient to test the summation logic).
   coeff_t value = INT16_MIN;
   for (int i = 0; i < 64 * 64; i++) {
     coeff_test_data[i] = value;

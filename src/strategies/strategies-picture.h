@@ -124,7 +124,11 @@ typedef unsigned (cost_pixel_any_size_func)(
 typedef void (cost_pixel_nxn_multi_func)(const pred_buffer preds, const kvz_pixel *orig, unsigned num_modes, unsigned *costs_out);
 typedef void (cost_pixel_any_size_multi_func)(int width, int height, const kvz_pixel **preds, const int stride, const kvz_pixel *orig, const int orig_stride, unsigned num_modes, unsigned *costs_out, int8_t *valid);
 
+#if KVZ_BIT_DEPTH <= 14
 typedef unsigned (pixels_calc_ssd_func)(const kvz_pixel *const ref, const kvz_pixel *const rec, const int ref_stride, const int rec_stride, const int width);
+#else
+typedef uint64_t (pixels_calc_ssd_func)(const kvz_pixel *const ref, const kvz_pixel *const rec, const int ref_stride, const int rec_stride, const int width);
+#endif
 typedef optimized_sad_func_ptr_t (get_optimized_sad_func)(int32_t);
 typedef uint32_t (ver_sad_func)(const kvz_pixel *pic_data, const kvz_pixel *ref_data,
                                 int32_t block_width, int32_t block_height,

@@ -112,7 +112,18 @@
 #define PIXEL_MIN 0
 #define PIXEL_MAX ((1 << KVZ_BIT_DEPTH) - 1)
 
+// Internal precision increase for intermediate samples (HEVC: max(bitDepth, 14) - bitDepth).
+#define KVZ_IF_INTERNAL_PREC_INC MAX(0, 14 - KVZ_BIT_DEPTH)
+
+#if KVZ_BIT_DEPTH <= 14
 typedef int16_t coeff_t;
+typedef int32_t dct_tmp_t;
+#define Q_SHIFT(x, q) ((x) << (q))
+#else
+typedef int32_t coeff_t;
+typedef int64_t dct_tmp_t;
+#define Q_SHIFT(x, q) ((int64_t)(x) << (q))
+#endif
 
 // #define VERBOSE 1
 
@@ -303,7 +314,14 @@ typedef int16_t coeff_t;
 #define MAX_MATRIX_COEF_NUM   64
 #define SCALING_LIST_REM_NUM  6
 
+#if KVZ_BIT_DEPTH <= 14
 #define MAX_TR_DYNAMIC_RANGE 15
+#else
+#define MAX_TR_DYNAMIC_RANGE (KVZ_BIT_DEPTH + 6)
+#endif
+
+#define COEFF_MIN (-(1 << MAX_TR_DYNAMIC_RANGE))
+#define COEFF_MAX ((1 << MAX_TR_DYNAMIC_RANGE) - 1)
 
 //Constants
 typedef enum { COLOR_Y = 0, COLOR_U, COLOR_V } color_t;

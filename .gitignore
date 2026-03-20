@@ -1,10 +1,21 @@
 # Build files
 /bin
 /build/*
+!/build/kvazaar_VS2026.slnx
+!/build/C_Properties.props
+!/build/Release_Optimizations.props
 !/build/kvazaar_lib
 /build/kvazaar_lib/*
 !/build/kvazaar_lib/kvazaar_lib.vcxproj
 !/build/kvazaar_lib/kvazaar_lib.vcxproj.filters
+!/build/kvazaar_cli
+/build/kvazaar_cli/*
+!/build/kvazaar_cli/kvazaar_cli.vcxproj
+!/build/kvazaar_cli/kvazaar_cli.vcxproj.filters
+!/build/kvazaar_tests
+/build/kvazaar_tests/*
+!/build/kvazaar_tests/kvazaar_tests.vcxproj
+!/build/kvazaar_tests/kvazaar_tests.vcxproj.filters
 /scons_build_*
 
 # Generated documentation
